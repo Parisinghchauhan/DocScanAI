@@ -1,0 +1,102 @@
+✅ Checkpoint 1: Setup Backend (Supabase + File Upload + OCR Pipeline)
+Goal: Prepare the base for data flow.
+
+What to do:
+
+Set up Supabase DB with 3 tables:
+
+invoices: file metadata
+
+items: extracted inventory
+
+gst_slabs: HSN-wise tax rates
+
+Build a file/image uploader using Streamlit or Flask.
+
+Integrate Tesseract OCR for invoice extraction.
+
+Tech Needed:
+
+bash
+Copy
+Edit
+pip install supabase pdf2image pytesseract streamlit
+✅ Checkpoint 2: Parse Invoice Data into Structured Format
+Goal: Extract usable inventory details from raw OCR.
+
+What to do:
+
+Clean OCR text (remove noise, fix lines).
+
+Use regex + fuzzy matching to detect:
+
+Item name
+
+Quantity
+
+Price per unit
+
+Total line price
+
+Store this structured info into items table in Supabase.
+
+Example Output:
+
+json
+Copy
+Edit
+{ "item": "Parle-G Biscuits", "qty": 5, "unit_price": 10, "total": 50 }
+✅ Checkpoint 3: Classify Items into GST Slabs (AI/Rule-Based)
+Goal: Assign tax slab based on item description.
+
+What to do:
+
+Build a local or Supabase-based HSN + GST Slab dataset (scrape or use CSV).
+
+Use keyword matching, or ML classifier (e.g., sklearn) to map items to slabs.
+
+Assign GST rate and HSN code to each item.
+
+Example Mapping:
+
+yaml
+Copy
+Edit
+"Parle-G" → HSN: 1905 → GST: 18%
+✅ Checkpoint 4: GST Calculation + Report Generation (PDF & JSON)
+Goal: Generate a legally formatted GSTR report.
+
+What to do:
+
+Calculate CGST/SGST/IGST for each item:
+
+python
+Copy
+Edit
+gst = price * gst_percent / 100
+Group totals by slab: 5%, 12%, 18%, 28%.
+
+Export full report as:
+
+Downloadable PDF invoice (using fpdf)
+
+GSTR-1/3B compatible JSON or CSV
+
+✅ Checkpoint 5: Smart Dashboard + Manual Corrections (Optional UI)
+Goal: Let users view, edit, and download everything.
+
+What to do:
+
+Build a minimal Streamlit dashboard:
+
+Upload history
+
+GST breakdown
+
+Manual slab correction (dropdowns)
+
+One-click download: GSTR-1 PDF or CSV
+
+🧠 Core Innovation of This Flow:
+Fully automates tax classification + filing from photos or invoices — no manual tallying, no accountant, no GST confusion.
+
