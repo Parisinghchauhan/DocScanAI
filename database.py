@@ -1,20 +1,29 @@
 import os
 import json
-from supabase import create_client
+import sqlite3
+import uuid
 from datetime import datetime
 
-class SupabaseClient:
+class DatabaseClient:
     def __init__(self):
-        self.url = os.getenv("SUPABASE_URL", "")
-        self.key = os.getenv("SUPABASE_KEY", "")
+        """Initialize the SQLite database client and create necessary tables."""
+        # Create data directory if it doesn't exist
+        os.makedirs("data", exist_ok=True)
         
-        if not self.url or not self.key:
-            raise ValueError("Supabase URL and API key must be provided as environment variables.")
-        
-        self.client = create_client(self.url, self.key)
+        # Connect to SQLite database
+        self.db_path = "data/taxlyzer.db"
+        self.conn = sqlite3.connect(self.db_path)
+        self.conn.row_factory = sqlite3.Row  # This enables dictionary-like access to rows
         
         # Ensure tables exist
         self._create_tables_if_not_exist()
+        
+        # Populate GST slabs table if empty
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM gst_slabs")
+        count = cursor.fetchone()[0]
+        if count == 0:
+            self._populate_gst_slabs()
     
     def _create_tables_if_not_exist(self):
         """
@@ -23,62 +32,51 @@ class SupabaseClient:
         - items: Store extracted items
         - gst_slabs: Store HSN codes and GST rates
         """
-        # In Supabase, we're using the REST API which doesn't support direct SQL execution
-        # Instead, let's create tables through the Supabase UI or management console
-        # For this project, we'll assume tables are already created in Supabase
+        cursor = self.conn.cursor()
         
-        # Check if tables exist
-        try:
-            # Try to access invoices table
-            self.client.table("invoices").select("id").limit(1).execute()
-            print("Invoices table exists.")
-        except Exception as e:
-            print(f"Error accessing invoices table: {e}")
-            print("Please create the invoices table in Supabase with the following structure:")
-            print("""
-                id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        # Create invoices table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS invoices (
+                id TEXT PRIMARY KEY,
                 file_name TEXT NOT NULL,
                 file_type TEXT NOT NULL,
                 raw_text TEXT,
-                created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-            """)
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        print("Invoices table is ready.")
         
-        try:
-            # Try to access items table
-            self.client.table("items").select("id").limit(1).execute()
-            print("Items table exists.")
-        except Exception as e:
-            print(f"Error accessing items table: {e}")
-            print("Please create the items table in Supabase with the following structure:")
-            print("""
-                id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                invoice_id UUID REFERENCES invoices(id),
+        # Create items table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS items (
+                id TEXT PRIMARY KEY,
+                invoice_id TEXT NOT NULL,
                 item TEXT NOT NULL,
                 qty NUMERIC NOT NULL,
                 unit_price NUMERIC NOT NULL,
                 total NUMERIC NOT NULL,
                 hsn_code TEXT,
                 gst_rate NUMERIC DEFAULT 0,
-                created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-            """)
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (invoice_id) REFERENCES invoices(id)
+            )
+        ''')
+        print("Items table is ready.")
         
-        try:
-            # Try to access gst_slabs table
-            self.client.table("gst_slabs").select("id").limit(1).execute()
-            print("GST slabs table exists.")
-        except Exception as e:
-            print(f"Error accessing gst_slabs table: {e}")
-            print("Please create the gst_slabs table in Supabase with the following structure:")
-            print("""
-                id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        # Create gst_slabs table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS gst_slabs (
+                id TEXT PRIMARY KEY,
                 hsn_code TEXT NOT NULL,
                 description TEXT,
                 gst_rate NUMERIC NOT NULL,
-                created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-            """)
-            
-            # For now, we'll skip populating GST slabs since the table might not exist
-            # We'll handle this in the UI by providing fallback classification
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        print("GST slabs table is ready.")
+        
+        # Commit changes
+        self.conn.commit()
     
     def _populate_gst_slabs(self):
         """Populate the gst_slabs table with common HSN codes."""
@@ -99,8 +97,15 @@ class SupabaseClient:
             # Add more common HSN codes as needed
         ]
         
+        cursor = self.conn.cursor()
         for hsn_data in common_hsn_codes:
-            self.client.table("gst_slabs").insert(hsn_data).execute()
+            cursor.execute(
+                "INSERT INTO gst_slabs (id, hsn_code, description, gst_rate) VALUES (?, ?, ?, ?)",
+                (str(uuid.uuid4()), hsn_data["hsn_code"], hsn_data["description"], hsn_data["gst_rate"])
+            )
+        
+        self.conn.commit()
+        print("Populated GST slabs table with common HSN codes.")
     
     def insert_invoice(self, file_name, file_type, raw_text):
         """
@@ -115,15 +120,16 @@ class SupabaseClient:
             str: ID of the inserted invoice, or None if failed
         """
         try:
-            result = self.client.table("invoices").insert({
-                "file_name": file_name,
-                "file_type": file_type,
-                "raw_text": raw_text
-            }).execute()
+            invoice_id = str(uuid.uuid4())
             
-            if result.data and len(result.data) > 0:
-                return result.data[0]["id"]
-            return None
+            cursor = self.conn.cursor()
+            cursor.execute(
+                "INSERT INTO invoices (id, file_name, file_type, raw_text) VALUES (?, ?, ?, ?)",
+                (invoice_id, file_name, file_type, raw_text)
+            )
+            
+            self.conn.commit()
+            return invoice_id
         except Exception as e:
             print(f"Error inserting invoice: {e}")
             return None
@@ -140,19 +146,26 @@ class SupabaseClient:
             bool: True if successful, False otherwise
         """
         try:
-            for item in items:
-                item_data = {
-                    "invoice_id": invoice_id,
-                    "item": item["item"],
-                    "qty": item["qty"],
-                    "unit_price": item["unit_price"],
-                    "total": item["total"],
-                    "hsn_code": item.get("hsn_code", ""),
-                    "gst_rate": item.get("gst_rate", 0)
-                }
-                
-                self.client.table("items").insert(item_data).execute()
+            cursor = self.conn.cursor()
             
+            for item in items:
+                item_id = str(uuid.uuid4())
+                
+                cursor.execute(
+                    "INSERT INTO items (id, invoice_id, item, qty, unit_price, total, hsn_code, gst_rate) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    (
+                        item_id,
+                        invoice_id,
+                        item["item"],
+                        item["qty"],
+                        item["unit_price"],
+                        item["total"],
+                        item.get("hsn_code", ""),
+                        item.get("gst_rate", 0)
+                    )
+                )
+            
+            self.conn.commit()
             return True
         except Exception as e:
             print(f"Error inserting items: {e}")
@@ -174,8 +187,17 @@ class SupabaseClient:
             
             item_id = item.pop("id")
             
-            self.client.table("items").update(item).eq("id", item_id).execute()
+            # Prepare SET clause for SQL update
+            set_clause = ", ".join([f"{key} = ?" for key in item.keys()])
+            values = list(item.values()) + [item_id]
             
+            cursor = self.conn.cursor()
+            cursor.execute(
+                f"UPDATE items SET {set_clause} WHERE id = ?",
+                values
+            )
+            
+            self.conn.commit()
             return True
         except Exception as e:
             print(f"Error updating item: {e}")
@@ -189,11 +211,12 @@ class SupabaseClient:
             list: List of invoice dictionaries
         """
         try:
-            result = self.client.table("invoices").select("*").order("created_at", desc=True).execute()
+            cursor = self.conn.cursor()
+            cursor.execute("SELECT * FROM invoices ORDER BY created_at DESC")
             
-            if result.data:
-                return result.data
-            return []
+            # Convert rows to dictionaries
+            invoices = [dict(row) for row in cursor.fetchall()]
+            return invoices
         except Exception as e:
             print(f"Error getting invoices: {e}")
             return []
@@ -209,10 +232,12 @@ class SupabaseClient:
             dict: Invoice details
         """
         try:
-            result = self.client.table("invoices").select("*").eq("id", invoice_id).execute()
+            cursor = self.conn.cursor()
+            cursor.execute("SELECT * FROM invoices WHERE id = ?", (invoice_id,))
             
-            if result.data and len(result.data) > 0:
-                return result.data[0]
+            row = cursor.fetchone()
+            if row:
+                return dict(row)
             return None
         except Exception as e:
             print(f"Error getting invoice: {e}")
@@ -229,11 +254,12 @@ class SupabaseClient:
             list: List of item dictionaries
         """
         try:
-            result = self.client.table("items").select("*").eq("invoice_id", invoice_id).execute()
+            cursor = self.conn.cursor()
+            cursor.execute("SELECT * FROM items WHERE invoice_id = ?", (invoice_id,))
             
-            if result.data:
-                return result.data
-            return []
+            # Convert rows to dictionaries
+            items = [dict(row) for row in cursor.fetchall()]
+            return items
         except Exception as e:
             print(f"Error getting items: {e}")
             return []
@@ -246,11 +272,12 @@ class SupabaseClient:
             list: List of GST slab dictionaries
         """
         try:
-            result = self.client.table("gst_slabs").select("*").execute()
+            cursor = self.conn.cursor()
+            cursor.execute("SELECT * FROM gst_slabs")
             
-            if result.data:
-                return result.data
-            return []
+            # Convert rows to dictionaries
+            slabs = [dict(row) for row in cursor.fetchall()]
+            return slabs
         except Exception as e:
             print(f"Error getting GST slabs: {e}")
             return []
@@ -284,3 +311,8 @@ class SupabaseClient:
         except Exception as e:
             print(f"Error finding HSN code: {e}")
             return None, 0
+            
+    def __del__(self):
+        """Close the database connection when the object is destroyed."""
+        if hasattr(self, 'conn'):
+            self.conn.close()

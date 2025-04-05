@@ -6,7 +6,7 @@ from PIL import Image
 import io
 
 # Import custom modules
-from database import SupabaseClient
+from database import DatabaseClient
 from ocr_processor import OCRProcessor
 from gst_classifier import GSTClassifier
 from report_generator import ReportGenerator
@@ -19,10 +19,10 @@ st.set_page_config(
     layout="wide"
 )
 
-# Initialize Supabase client
+# Initialize database client
 @st.cache_resource
-def init_supabase():
-    return SupabaseClient()
+def init_database():
+    return DatabaseClient()
 
 # Initialize OCR processor
 @st.cache_resource
@@ -42,7 +42,7 @@ def init_report_generator():
 # Main application
 def main():
     try:
-        supabase = init_supabase()
+        db = init_database()
         ocr_processor = init_ocr()
         gst_classifier = init_classifier()
         report_generator = init_report_generator()
@@ -59,30 +59,16 @@ def main():
         page = st.sidebar.radio("Go to", ["Upload Invoice", "Invoice History", "GST Dashboard"])
         
         if page == "Upload Invoice":
-            upload_invoice_page(supabase, ocr_processor, gst_classifier)
+            upload_invoice_page(db, ocr_processor, gst_classifier)
         elif page == "Invoice History":
-            invoice_history_page(supabase, report_generator)
+            invoice_history_page(db, report_generator)
         elif page == "GST Dashboard":
-            gst_dashboard_page(supabase, report_generator)
+            gst_dashboard_page(db, report_generator)
     except Exception as e:
         st.error(f"Error initializing application: {str(e)}")
-        
-        if "Supabase URL and API key" in str(e):
-            st.warning("Please set up your Supabase environment variables (SUPABASE_URL and SUPABASE_KEY).")
-        elif "relation" in str(e) and "does not exist" in str(e):
-            st.warning("""
-            Database tables not found. Please create the required tables in your Supabase project:
-            
-            1. invoices - For storing invoice metadata
-            2. items - For storing extracted line items
-            3. gst_slabs - For storing HSN codes and GST rates
-            
-            See console output for detailed table schemas.
-            """)
-        else:
-            st.info("If you're seeing database-related errors, make sure your Supabase project is properly set up with the required tables.")
+        st.info("If there's a database error, the system will try to create the necessary tables automatically.")
 
-def upload_invoice_page(supabase, ocr_processor, gst_classifier):
+def upload_invoice_page(db, ocr_processor, gst_classifier):
     st.header("Upload Invoice")
     
     # File uploader
@@ -94,7 +80,7 @@ def upload_invoice_page(supabase, ocr_processor, gst_classifier):
     if uploaded_file is not None:
         # Display uploaded file
         if uploaded_file.type.startswith('image'):
-            st.image(uploaded_file, caption="Uploaded Invoice", use_column_width=True)
+            st.image(uploaded_file, caption="Uploaded Invoice", use_container_width=True)
         else:
             st.info("PDF uploaded successfully.")
         
@@ -125,14 +111,14 @@ def upload_invoice_page(supabase, ocr_processor, gst_classifier):
                     classified_items = gst_classifier.classify_items(items_data)
                     
                     # Save to database
-                    invoice_id = supabase.insert_invoice(
+                    invoice_id = db.insert_invoice(
                         file_name=uploaded_file.name,
                         file_type=uploaded_file.type,
                         raw_text=extracted_text
                     )
                     
                     if invoice_id:
-                        supabase.insert_items(invoice_id, classified_items)
+                        db.insert_items(invoice_id, classified_items)
                         
                         # Display results
                         st.success("Invoice processed successfully!")
@@ -186,7 +172,7 @@ def upload_invoice_page(supabase, ocr_processor, gst_classifier):
                                     "hsn_code": hsn_code
                                 }
                                 
-                                supabase.update_item(updated_item)
+                                db.update_item(updated_item)
                                 st.success(f"Item '{item_name}' updated successfully!")
                                 st.rerun()
                         
@@ -197,8 +183,10 @@ def upload_invoice_page(supabase, ocr_processor, gst_classifier):
                         # Generate report button
                         if st.button("Generate GST Report"):
                             with st.spinner("Generating report..."):
-                                pdf_report = report_generator.generate_pdf_report(invoice_id, classified_items, gst_breakdown)
-                                json_report = report_generator.generate_json_report(invoice_id, classified_items, gst_breakdown)
+                                # Create a report generator instance for this report
+                                report_gen = init_report_generator()
+                                pdf_report = report_gen.generate_pdf_report(invoice_id, classified_items, gst_breakdown)
+                                json_report = report_gen.generate_json_report(invoice_id, classified_items, gst_breakdown)
                                 
                                 # Provide download buttons
                                 st.download_button(
@@ -224,11 +212,11 @@ def upload_invoice_page(supabase, ocr_processor, gst_classifier):
                     # Clean up the temporary file
                     os.unlink(temp_file_path)
 
-def invoice_history_page(supabase, report_generator):
+def invoice_history_page(db, report_generator):
     st.header("Invoice History")
     
     # Fetch invoices from database
-    invoices = supabase.get_invoices()
+    invoices = db.get_invoices()
     
     if not invoices:
         st.info("No invoices found. Upload your first invoice to get started!")
@@ -247,7 +235,7 @@ def invoice_history_page(supabase, report_generator):
     
     if selected_invoice_id:
         # Fetch items for the selected invoice
-        items = supabase.get_items_by_invoice(selected_invoice_id)
+        items = db.get_items_by_invoice(selected_invoice_id)
         
         if items:
             # Display invoice summary
@@ -291,11 +279,11 @@ def invoice_history_page(supabase, report_generator):
         else:
             st.info("No items found for this invoice.")
 
-def gst_dashboard_page(supabase, report_generator):
+def gst_dashboard_page(db, report_generator):
     st.header("GST Dashboard")
     
     # Fetch all invoices and items
-    invoices = supabase.get_invoices()
+    invoices = db.get_invoices()
     
     if not invoices:
         st.info("No invoices found. Upload your first invoice to get started!")
@@ -304,7 +292,7 @@ def gst_dashboard_page(supabase, report_generator):
     # Get all items across all invoices
     all_items = []
     for invoice in invoices:
-        items = supabase.get_items_by_invoice(invoice["id"])
+        items = db.get_items_by_invoice(invoice["id"])
         all_items.extend(items)
     
     if not all_items:
@@ -365,7 +353,7 @@ def gst_dashboard_page(supabase, report_generator):
                 # Get items for filtered invoices
                 filtered_items = []
                 for invoice in filtered_invoices:
-                    items = supabase.get_items_by_invoice(invoice["id"])
+                    items = db.get_items_by_invoice(invoice["id"])
                     filtered_items.extend(items)
                 
                 # Generate GSTR-1 compatible report
