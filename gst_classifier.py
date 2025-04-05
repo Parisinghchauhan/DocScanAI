@@ -1,14 +1,34 @@
 import re
 import os
 import csv
+import json
 import pandas as pd
 from fuzzywuzzy import fuzz
+
+# Check if AI processor is available
+try:
+    from ai_processor import AIProcessor
+    ai_available = True
+except ImportError:
+    ai_available = False
 
 class GSTClassifier:
     def __init__(self):
         # Load HSN codes and GST rates
         self.hsn_data = self._load_hsn_data()
         
+        # Initialize AI processor if available
+        if ai_available:
+            try:
+                self.ai_processor = AIProcessor()
+                self.use_ai = True
+                print("AI processing enabled for enhanced GST classification")
+            except Exception as e:
+                print(f"AI GST classification not available: {e}")
+                self.use_ai = False
+        else:
+            self.use_ai = False
+            
         # Keywords to help identify item categories
         self.category_keywords = {
             "food": ["biscuit", "cookie", "cake", "bread", "rice", "wheat", "flour", "sugar", "milk", "curd", "cheese",
@@ -101,38 +121,71 @@ class GSTClassifier:
         Returns:
             list: List of dictionaries with GST details added
         """
-        classified_items = []
-        
-        for item in items:
-            item_name = item["item"].lower()
-            
-            # Check if item is in specific items list
-            for specific_item, details in self.specific_items.items():
-                if specific_item in item_name:
-                    item["gst_rate"] = details["gst_rate"]
-                    item["hsn_code"] = details["hsn_code"]
-                    classified_items.append(item)
-                    break
-            else:
-                # If not found in specific items, try to match with HSN data
-                hsn_code, gst_rate = self._match_with_hsn(item_name)
+        # If AI is available, try to use it for classification
+        if hasattr(self, 'use_ai') and self.use_ai:
+            try:
+                # Extract item descriptions for AI classification
+                item_descriptions = [item["item"] for item in items]
                 
-                if hsn_code:
-                    item["hsn_code"] = hsn_code
-                    item["gst_rate"] = gst_rate
-                else:
-                    # If not found in HSN data, use category-based classification
-                    category = self._identify_category(item_name)
+                # Get AI suggestions for HSN codes and GST rates
+                hsn_suggestions = self.ai_processor.suggest_hsn_codes(item_descriptions)
+                
+                if hsn_suggestions:
+                    # Apply AI suggestions
+                    classified_items = []
+                    for item in items:
+                        item_name = item["item"]
+                        if item_name in hsn_suggestions:
+                            suggestion = hsn_suggestions[item_name]
+                            item["hsn_code"] = suggestion.get("hsn_code", "")
+                            item["gst_rate"] = suggestion.get("gst_rate", 18)
+                        else:
+                            # Fall back to traditional classification if item not found
+                            self._traditional_classify_item(item)
+                        
+                        classified_items.append(item)
                     
-                    if category:
-                        item["gst_rate"] = self.category_to_gst.get(category, 18)  # Default to 18% if category not found
-                    else:
-                        # Default GST rate if nothing matches
-                        item["gst_rate"] = 18
+                    print(f"AI successfully classified {len(classified_items)} items")
+                    return classified_items
                 
-                classified_items.append(item)
+            except Exception as e:
+                print(f"AI-based classification failed: {e}")
+                # Fall back to traditional classification
         
+        # Traditional classification approach
+        classified_items = []
+        for item in items:
+            self._traditional_classify_item(item)
+            classified_items.append(item)
+            
         return classified_items
+        
+    def _traditional_classify_item(self, item):
+        """Helper method for traditional classification logic"""
+        item_name = item["item"].lower()
+        
+        # Check if item is in specific items list
+        for specific_item, details in self.specific_items.items():
+            if specific_item in item_name:
+                item["gst_rate"] = details["gst_rate"]
+                item["hsn_code"] = details["hsn_code"]
+                return
+                
+        # If not found in specific items, try to match with HSN data
+        hsn_code, gst_rate = self._match_with_hsn(item_name)
+        
+        if hsn_code:
+            item["hsn_code"] = hsn_code
+            item["gst_rate"] = gst_rate
+        else:
+            # If not found in HSN data, use category-based classification
+            category = self._identify_category(item_name)
+            
+            if category:
+                item["gst_rate"] = self.category_to_gst.get(category, 18)  # Default to 18% if category not found
+            else:
+                # Default GST rate if nothing matches
+                item["gst_rate"] = 18
     
     def _match_with_hsn(self, item_name):
         """

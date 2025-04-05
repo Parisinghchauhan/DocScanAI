@@ -4,11 +4,13 @@ version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.11"
 dependencies = [
+    "anthropic>=0.49.0",
     "flask>=3.1.0",
     "flask-cors>=5.0.1",
     "fpdf>=1.7.2",
     "fuzzywuzzy>=0.18.0",
     "numpy>=2.2.4",
+    "openai>=1.70.0",
     "pandas>=2.2.3",
     "pdf2image>=1.17.0",
     "pytesseract>=0.3.13",

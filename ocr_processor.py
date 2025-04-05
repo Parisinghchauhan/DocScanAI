@@ -4,6 +4,7 @@ import pytesseract
 from PIL import Image
 from pdf2image import convert_from_path
 import numpy as np
+from ai_processor import AIProcessor
 
 class OCRProcessor:
     def __init__(self):
@@ -13,6 +14,15 @@ class OCRProcessor:
         except Exception as e:
             print(f"Tesseract not properly configured: {e}")
             # In a production system, we might raise an exception here
+        
+        # Initialize AI processor if available
+        try:
+            self.ai_processor = AIProcessor()
+            self.use_ai = True
+            print("AI processing enabled for enhanced OCR accuracy")
+        except Exception as e:
+            print(f"AI processing not available: {e}")
+            self.use_ai = False
     
     def process_file(self, file_path):
         """
@@ -125,6 +135,25 @@ class OCRProcessor:
         Returns:
             list: List of dictionaries containing item details
         """
+        # First, enhance the OCR text with AI if available
+        if self.use_ai:
+            try:
+                # Enhance the raw OCR text
+                enhanced_text = self.ai_processor.enhance_ocr_text(text)
+                print("OCR text enhanced with AI")
+                
+                # Try AI-based extraction first
+                ai_items = self.ai_processor.extract_structured_data(enhanced_text)
+                if ai_items and len(ai_items) > 0:
+                    print(f"AI successfully extracted {len(ai_items)} items")
+                    return ai_items
+                
+                # If AI extraction fails, fall back to traditional methods but use the enhanced text
+                text = enhanced_text
+            except Exception as e:
+                print(f"AI-based extraction failed: {e}")
+                # Continue with traditional methods
+        
         items = []
         
         # Clean the text

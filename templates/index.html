@@ -35,12 +35,14 @@
                     <li class="nav-item">
                         <a class="nav-link" href="#" id="dashboard-nav">GST Dashboard</a>
                     </li>
-                </ul>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="trends-nav"><i class="fas fa-chart-line"></i> Trend Analysis</a>
+                </div>
             </div>
         </div>
     </nav>
-
-    <!-- Hero Section -->
+                    </li>
+                </ul>
     <section class="hero-section" id="home-page">
         <div class="container">
             <div class="hero-tag">Revolutionizing GST Management</div>
@@ -415,6 +417,143 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <!-- Custom JavaScript -->
+    <!-- Trend Analysis Section -->
+    <div class="container mt-4 d-none" id="trends-section">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-line"></i> GST Trend Analysis</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Filter Form -->
+                        <form id="trend-filter-form" class="mb-4">
+                            <div class="row align-items-end">
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label for="trend-start-date" class="form-label">Start Date</label>
+                                        <input type="date" class="form-control" id="trend-start-date" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label for="trend-end-date" class="form-label">End Date</label>
+                                        <input type="date" class="form-control" id="trend-end-date" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label for="trend-group-by" class="form-label">Group By</label>
+                                        <select class="form-select" id="trend-group-by">
+                                            <option value="day">Daily</option>
+                                            <option value="week">Weekly</option>
+                                            <option value="month" selected>Monthly</option>
+                                            <option value="quarter">Quarterly</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <button type="submit" class="btn btn-primary w-100">
+                                            <i class="fas fa-filter"></i> Apply Filters
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                        
+                        <!-- Summary Statistics -->
+                        <div class="row mb-4">
+                            <div class="col-md-4 mb-4">
+                                <div class="card dashboard-card text-white bg-primary">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Total Tax</h5>
+                                        <h2 id="trend-total-tax">₹0.00</h2>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <div class="card dashboard-card text-white bg-success">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Total Taxable Amount</h5>
+                                        <h2 id="trend-total-taxable">₹0.00</h2>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <div class="card dashboard-card text-white bg-warning">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Total Invoices</h5>
+                                        <h2 id="trend-invoice-count">0</h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Additional Stats -->
+                        <div class="row mb-4">
+                            <div class="col-md-4 mb-4">
+                                <div class="card dashboard-card border-primary">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title">Total Items</h5>
+                                        <h3 id="trend-item-count">0</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <div class="card dashboard-card border-success">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title">Avg. Tax per Invoice</h5>
+                                        <h3 id="trend-avg-tax">₹0.00</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <div class="card dashboard-card border-warning">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title">Avg. Items per Invoice</h5>
+                                        <h3 id="trend-avg-items">0</h3>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Time Series Chart -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card dashboard-card">
+                                    <div class="card-body">
+                                        <h4>Tax Trend Over Time</h4>
+                                        <canvas id="trend-chart" height="300"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Distribution Charts -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card dashboard-card">
+                                    <div class="card-body">
+                                        <h4>Top HSN Codes</h4>
+                                        <canvas id="top-hsn-chart" height="300"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card dashboard-card">
+                                    <div class="card-body">
+                                        <h4>GST Slab Distribution</h4>
+                                        <canvas id="slab-distribution-chart" height="300"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <script src="/js/main.js"></script>
 </body>
 </html>
