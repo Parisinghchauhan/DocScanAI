@@ -10,9 +10,9 @@ class DatabaseClient:
         # Create data directory if it doesn't exist
         os.makedirs("data", exist_ok=True)
         
-        # Connect to SQLite database
+        # Connect to SQLite database with thread safety
         self.db_path = "data/taxlyzer.db"
-        self.conn = sqlite3.connect(self.db_path)
+        self.conn = sqlite3.connect(self.db_path, check_same_thread=False)
         self.conn.row_factory = sqlite3.Row  # This enables dictionary-like access to rows
         
         # Ensure tables exist
