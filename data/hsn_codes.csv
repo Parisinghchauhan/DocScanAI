@@ -1,0 +1,77 @@
+hsn_code,description,gst_rate
+1905,"Bread, pastry, cakes, biscuits",18
+2106,Food preparations,18
+3004,Medicaments,12
+3304,Beauty or make-up preparations,28
+3401,"Soap, organic surface-active products",18
+3402,Washing and cleaning preparations,18
+3923,Plastic articles for packaging,18
+4819,"Cartons, boxes, cases, bags of paper",18
+8415,Air conditioning machines,28
+8508,Vacuum cleaners,28
+8516,Electric heating equipment,28
+8517,"Telephones, smartphones",18
+8528,"Monitors and projectors, TV receivers",28
+0402,"Milk and cream, concentrated or sweetened",5
+0901,"Coffee, roasted or not, coffee substitutes",5
+0902,"Tea, flavored or not",5
+1001,Wheat and meslin,0
+1006,Rice,0
+1101,Wheat or meslin flour,0
+1701,"Cane or beet sugar, chemically pure sucrose",5
+1902,"Pasta, couscous",18
+1904,Prepared foods from cereals,18
+2009,Fruit juices and vegetable juices,12
+2201,"Waters, natural or artificial mineral waters",12
+2202,"Waters with added sugar, sweetened beverages",28
+2203,Beer made from malt,28
+2204,"Wine of fresh grapes, grape must",28
+3003,"Medicaments not in measured doses or retail",12
+3306,Preparations for oral or dental hygiene,18
+3307,Pre-shave or after-shave preparations,18
+3406,Candles and similar articles,18
+3926,Other articles of plastics,18
+4201,Saddlery and harness for animals,18
+4203,Articles of apparel of leather,18
+4818,"Toilet paper, similar household or sanitary paper",18
+6101,"Men's or boys' overcoats, jackets, capes, knitted",5
+6102,"Women's or girls' overcoats, jackets, capes, knitted",5
+6103,"Men's or boys' suits, ensembles, jackets, knitted",5
+6104,"Women's or girls' suits, ensembles, jackets, knitted",5
+6105,"Men's or boys' shirts, knitted",5
+6106,"Women's or girls' blouses, shirts, knitted",5
+6112,Track suits and swimwear,5
+6201,"Men's or boys' overcoats, jackets, capes, not knitted",5
+6202,"Women's or girls' overcoats, jackets, capes, not knitted",5
+6203,"Men's or boys' suits, ensembles, jackets, not knitted",5
+6204,"Women's or girls' suits, ensembles, jackets, not knitted",5
+6205,"Men's or boys' shirts, not knitted",5
+6206,"Women's or girls' blouses, shirts, not knitted",5
+6401,Waterproof footwear with outer soles,5
+6402,Other footwear with outer soles of rubber or plastics,5
+6403,Footwear with outer soles of leather,5
+7117,Imitation jewelry,3
+8414,"Air or vacuum pumps, air compressors",28
+8418,"Refrigerators, freezers",28
+8450,Household or laundry-type washing machines,28
+8451,Machinery for washing or cleaning textiles,28
+8471,"Automatic data processing machines, computers",18
+8472,Other office machines,18
+8473,Parts for office machines,18
+8504,"Electric transformers, static converters",18
+8509,Electro-mechanical domestic appliances,28
+8510,"Shavers, hair clippers, with electric motor",28
+8518,"Microphones, loudspeakers, headphones",18
+8519,Sound recording or reproducing apparatus,28
+8521,Video recording or reproducing apparatus,28
+8523,Discs and other media for recording sound,18
+8527,"Reception apparatus for radio-broadcasting",28
+8539,"Electric filament or discharge lamps, sealed beam lamps",18
+8544,"Insulated wire, cable",18
+9004,Spectacles and goggles,12
+9405,"Lamps and lighting fittings",18
+9503,"Toys, puzzles",12
+9504,"Video game consoles, table games, playing cards",18
+9505,"Festive, carnival or entertainment articles",18
+9608,"Ball point pens, felt tipped pens",12
+9609,"Pencils, crayons, pastels",12
