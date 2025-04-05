@@ -183,3 +183,50 @@ class AIProcessor:
         except Exception as e:
             print(f"Error suggesting HSN codes: {e}")
             return {}
+
+    def get_chatbot_response(self, user_message, chat_history=None):
+        """
+        Get response from the chatbot using AI
+        
+        Args:
+            user_message (str): User's message
+            chat_history (list, optional): List of previous messages for context
+            
+        Returns:
+            str: Chatbot's response
+        """
+        try:
+            # Prepare system message with information about GST in India
+            system_message = """
+            You are a helpful GST assistant for TaxLyzer, an Indian invoice analysis application.
+            Provide concise, accurate information about GST in India, invoice processing, and tax compliance.
+            If you don't know something, say so. Base your answers on Indian tax regulations.
+            Keep responses under 150 words. Use simple language that anyone can understand.
+            """
+            
+            # Create message history including system message
+            messages = [{"role": "system", "content": system_message}]
+            
+            # Add chat history if available
+            if chat_history:
+                for msg in chat_history[-10:]:  # Limit to last 10 messages for context
+                    if msg.get('type') == 'user':
+                        messages.append({"role": "user", "content": msg.get('content', '')})
+                    elif msg.get('type') == 'bot':
+                        messages.append({"role": "assistant", "content": msg.get('content', '')})
+            
+            # Add current user message
+            messages.append({"role": "user", "content": user_message})
+            
+            # Get response from AI model
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                max_tokens=300  # Limit token length for cost efficiency
+            )
+            
+            return response.choices[0].message.content
+        
+        except Exception as e:
+            print(f"Error getting chatbot response: {e}")
+            return "I'm having trouble connecting to my knowledge base right now. Please try again later."

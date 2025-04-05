@@ -14,6 +14,7 @@ from ocr_processor import OCRProcessor
 from gst_classifier import GSTClassifier
 from report_generator import ReportGenerator
 from trend_analyzer import TrendAnalyzer
+from ai_processor import AIProcessor
 
 # For batch processing
 batch_jobs = {}
@@ -31,6 +32,7 @@ ocr_processor = OCRProcessor()
 gst_classifier = GSTClassifier()
 report_generator = ReportGenerator()
 trend_analyzer = TrendAnalyzer(db)
+ai_processor = AIProcessor()
 
 # Routes
 @app.route('/')
@@ -629,6 +631,29 @@ def get_top_hsn_codes():
         
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+# Chatbot endpoint
+@app.route('/api/chatbot', methods=['POST'])
+def chatbot():
+    try:
+        data = request.json
+        
+        if not data or 'message' not in data:
+            return jsonify({'error': 'No message provided'}), 400
+            
+        user_message = data['message']
+        
+        # Get chat history context if available
+        chat_history = data.get('history', [])
+        
+        # Use AI processor to get response
+        response = ai_processor.get_chatbot_response(user_message, chat_history)
+        
+        return jsonify({
+            'response': response
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
