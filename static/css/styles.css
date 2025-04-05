@@ -1,0 +1,95 @@
+/* Main Styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f5f5;
+    color: #333;
+}
+
+.navbar-brand {
+    font-weight: bold;
+}
+
+.content-page {
+    margin-bottom: 2rem;
+}
+
+/* Card styling */
+.card {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 0.5rem;
+    border: none;
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    border-radius: 0.5rem 0.5rem 0 0 !important;
+}
+
+/* Form elements */
+.form-control:focus, .form-select:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Image preview */
+#image-preview {
+    max-height: 300px;
+    margin: 0 auto;
+    display: block;
+    border-radius: 0.25rem;
+    border: 1px solid #ddd;
+}
+
+/* Tables */
+.table-responsive {
+    border-radius: 0.25rem;
+    overflow: hidden;
+}
+
+th {
+    background-color: #f8f9fa;
+}
+
+/* Dashboard cards */
+.bg-success, .bg-info, .bg-warning {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Navigation active state */
+.nav-link.active {
+    font-weight: bold;
+    color: #fff !important;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 0.25rem;
+}
+
+/* Buttons */
+.btn {
+    border-radius: 0.25rem;
+    font-weight: 500;
+}
+
+.btn-primary {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.btn-primary:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+}
+
+/* Animation for transition between pages */
+.content-page {
+    transition: opacity 0.3s ease;
+}
+
+/* Modal customization */
+.modal-content {
+    border-radius: 0.5rem;
+    border: none;
+}
+
+.modal-header {
+    border-radius: 0.5rem 0.5rem 0 0;
+}
