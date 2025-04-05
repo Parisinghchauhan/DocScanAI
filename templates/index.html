@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaxLyzer - GST Invoice Processor</title>
+    <title>TaxLyzer - India's Smartest GST Invoice Processor</title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -16,7 +16,7 @@
 </head>
 <body>
     <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
             <a class="navbar-brand" href="#">
                 <i class="fas fa-file-invoice"></i> TaxLyzer
@@ -40,27 +40,69 @@
         </div>
     </nav>
 
-    <!-- Main Content Container -->
-    <div class="container mt-4">
-        <div class="row">
-            <div class="col-12">
-                <h1 class="mb-4">TaxLyzer - Automated GST Invoice Processor</h1>
-                <p class="lead">
-                    Upload invoice images or PDFs to automatically extract data, 
-                    classify items into GST slabs, and generate tax reports.
-                </p>
+    <!-- Hero Section -->
+    <section class="hero-section" id="home-page">
+        <div class="container">
+            <div class="hero-tag">Revolutionizing GST Management</div>
+            <h1>India's Smartest Inventory & GST Insight Tool</h1>
+            <h2>for Small Businesses</h2>
+            <p>
+                Decode GST, track real margins, and auto-generate tax reports — completely free.
+                Put enterprise-grade tax intelligence in your hands.
+            </p>
+            <button class="btn btn-cta" id="try-now-btn">Try Now - It's Free</button>
+        </div>
+    </section>
+
+    <!-- Magic Section -->
+    <section class="magic-section" id="magic-section">
+        <div class="container">
+            <h2>Experience the Magic</h2>
+            <p>Upload an invoice and watch our AI transform it into actionable insights</p>
+            
+            <div class="upload-container">
+                <div class="upload-icon">
+                    <i class="fas fa-upload"></i>
+                </div>
+                <h3>Upload your invoice</h3>
+                <p>Drag & drop or click to select</p>
+                <p class="file-support">Supports PDF, JPG, and PNG files</p>
+                
+                <form id="landing-upload-form" class="mt-4" enctype="multipart/form-data">
+                    <div class="custom-file-upload" id="drop-area">
+                        <input type="file" id="landing-invoice-file" name="file" accept=".jpg,.jpeg,.png,.pdf" class="d-none">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Click or drop files here</p>
+                    </div>
+                    
+                    <div class="preview-area mt-3">
+                        <img id="landing-image-preview" class="img-fluid d-none" alt="Invoice Preview">
+                        <div id="landing-pdf-preview" class="alert alert-info d-none">
+                            PDF file selected and ready to upload.
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-cta mt-3 w-100">
+                        <i class="fas fa-cogs me-2"></i> Process Invoice
+                    </button>
+                </form>
             </div>
         </div>
+    </section>
 
-        <!-- Alert area for notifications -->
+    <!-- Alert area for notifications -->
+    <div class="container mt-4">
         <div id="alert-area"></div>
+    </div>
 
+    <!-- Main Content Container -->
+    <div class="container mt-4">
         <!-- Main Content Pages -->
         <div class="content-area">
             <!-- Upload Invoice Page -->
-            <div id="upload-page" class="content-page">
+            <div id="upload-page" class="content-page d-none">
                 <div class="card">
-                    <div class="card-header bg-primary text-white">
+                    <div class="card-header">
                         <h5><i class="fas fa-upload"></i> Upload Invoice</h5>
                     </div>
                     <div class="card-body">
@@ -142,7 +184,7 @@
             <!-- Invoice History Page -->
             <div id="history-page" class="content-page d-none">
                 <div class="card">
-                    <div class="card-header bg-primary text-white">
+                    <div class="card-header">
                         <h5><i class="fas fa-history"></i> Invoice History</h5>
                     </div>
                     <div class="card-body">
@@ -216,7 +258,7 @@
                                 <button class="btn btn-success me-2" id="history-pdf-btn">
                                     <i class="fas fa-file-pdf"></i> Generate PDF Report
                                 </button>
-                                <button class="btn btn-info" id="history-json-btn">
+                                <button class="btn btn-info me-2" id="history-json-btn">
                                     <i class="fas fa-file-code"></i> Generate JSON Report
                                 </button>
                                 <button class="btn btn-secondary" id="back-to-list-btn">
@@ -230,14 +272,14 @@
             
             <!-- GST Dashboard Page -->
             <div id="dashboard-page" class="content-page d-none">
-                <div class="card">
-                    <div class="card-header bg-primary text-white">
+                <div class="card dashboard-page">
+                    <div class="card-header">
                         <h5><i class="fas fa-chart-pie"></i> GST Dashboard</h5>
                     </div>
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-4 mb-4">
-                                <div class="card text-white bg-success">
+                                <div class="card dashboard-card text-white bg-success">
                                     <div class="card-body">
                                         <h5 class="card-title">Total GST Collected</h5>
                                         <h2 id="dashboard-total-tax">₹0.00</h2>
@@ -245,7 +287,7 @@
                                 </div>
                             </div>
                             <div class="col-md-4 mb-4">
-                                <div class="card text-white bg-info">
+                                <div class="card dashboard-card text-white bg-info">
                                     <div class="card-body">
                                         <h5 class="card-title">Total Taxable Amount</h5>
                                         <h2 id="dashboard-total-taxable">₹0.00</h2>
@@ -253,7 +295,7 @@
                                 </div>
                             </div>
                             <div class="col-md-4 mb-4">
-                                <div class="card text-white bg-warning">
+                                <div class="card dashboard-card text-white bg-warning">
                                     <div class="card-body">
                                         <h5 class="card-title">Total Invoices</h5>
                                         <h2 id="dashboard-total-invoices">0</h2>
@@ -264,18 +306,26 @@
                         
                         <div class="row mb-4">
                             <div class="col-md-6">
-                                <h4>GST by Slab</h4>
-                                <canvas id="gst-by-slab-chart"></canvas>
+                                <div class="card dashboard-card">
+                                    <div class="card-body">
+                                        <h4>GST by Slab</h4>
+                                        <canvas id="gst-by-slab-chart"></canvas>
+                                    </div>
+                                </div>
                             </div>
                             <div class="col-md-6">
-                                <h4>Tax Distribution</h4>
-                                <canvas id="tax-distribution-chart"></canvas>
+                                <div class="card dashboard-card">
+                                    <div class="card-body">
+                                        <h4>Tax Distribution</h4>
+                                        <canvas id="tax-distribution-chart"></canvas>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         
                         <div class="row">
                             <div class="col-12">
-                                <div class="card">
+                                <div class="card dashboard-card">
                                     <div class="card-header bg-secondary text-white">
                                         <h5>Generate GSTR-1 Report</h5>
                                     </div>
@@ -315,7 +365,7 @@
     <div class="modal fade" id="edit-item-modal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
+                <div class="modal-header">
                     <h5 class="modal-title">Edit Item</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>

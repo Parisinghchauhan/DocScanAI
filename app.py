@@ -292,7 +292,12 @@ def get_gst_statistics():
         invoices = db.get_invoices()
         
         if not invoices:
-            return jsonify({"error": "No invoices found"}), 404
+            # Return empty stats instead of 404 for better UI handling
+            return jsonify({
+                "tax_by_slab": {},
+                "total_tax": 0,
+                "total_taxable": 0
+            })
             
         # Get all items across all invoices
         all_items = []
@@ -301,7 +306,12 @@ def get_gst_statistics():
             all_items.extend(items)
             
         if not all_items:
-            return jsonify({"error": "No items found across all invoices"}), 404
+            # Return empty stats instead of 404 for better UI handling
+            return jsonify({
+                "tax_by_slab": {},
+                "total_tax": 0,
+                "total_taxable": 0
+            })
             
         # Calculate total tax by slab
         tax_by_slab = {}

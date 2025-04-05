@@ -20,10 +20,77 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Load dashboard data
     loadDashboardData();
+    
+    // Initialize the file upload drag & drop
+    initializeFileDragDrop();
 });
+
+// Initialize drag and drop for file upload
+function initializeFileDragDrop() {
+    const dropArea = document.getElementById('drop-area');
+    const fileInput = document.getElementById('landing-invoice-file');
+    
+    if (!dropArea || !fileInput) return;
+    
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, unhighlight, false);
+    });
+    
+    function highlight() {
+        dropArea.classList.add('highlight');
+    }
+    
+    function unhighlight() {
+        dropArea.classList.remove('highlight');
+    }
+    
+    dropArea.addEventListener('drop', handleDrop, false);
+    
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        if (files.length > 0) {
+            fileInput.files = files;
+            handleLandingFileSelect({ target: fileInput });
+        }
+    }
+    
+    // Click to select file
+    dropArea.addEventListener('click', () => {
+        fileInput.click();
+    });
+    
+    // File input change
+    fileInput.addEventListener('change', handleLandingFileSelect);
+}
 
 // Navigation setup
 function setupNavigation() {
+    // Landing page navigation
+    const tryNowBtn = document.getElementById('try-now-btn');
+    if (tryNowBtn) {
+        tryNowBtn.addEventListener('click', () => {
+            document.getElementById('home-page').classList.add('d-none');
+            document.getElementById('magic-section').classList.add('d-none');
+            document.getElementById('upload-page').classList.remove('d-none');
+            document.getElementById('upload-nav').classList.add('active');
+        });
+    }
+    
     const navLinks = {
         'upload-nav': 'upload-page',
         'history-nav': 'history-page',
@@ -31,54 +98,61 @@ function setupNavigation() {
     };
     
     Object.entries(navLinks).forEach(([navId, pageId]) => {
-        document.getElementById(navId).addEventListener('click', (e) => {
-            e.preventDefault();
-            
-            // Hide all pages
-            document.querySelectorAll('.content-page').forEach(page => {
-                page.classList.add('d-none');
+        const navElement = document.getElementById(navId);
+        if (navElement) {
+            navElement.addEventListener('click', (e) => {
+                e.preventDefault();
+                
+                // Hide landing page sections
+                document.getElementById('home-page')?.classList.add('d-none');
+                document.getElementById('magic-section')?.classList.add('d-none');
+                
+                // Hide all pages
+                document.querySelectorAll('.content-page').forEach(page => {
+                    page.classList.add('d-none');
+                });
+                
+                // Remove active class from all nav links
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    link.classList.remove('active');
+                });
+                
+                // Show selected page
+                document.getElementById(pageId).classList.remove('d-none');
+                
+                // Add active class to clicked nav link
+                e.target.classList.add('active');
             });
-            
-            // Remove active class from all nav links
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.classList.remove('active');
-            });
-            
-            // Show selected page
-            document.getElementById(pageId).classList.remove('d-none');
-            
-            // Add active class to clicked nav link
-            e.target.classList.add('active');
-        });
+        }
     });
-    
-    // Set upload page as default active page
-    document.getElementById('upload-nav').classList.add('active');
 }
 
 // Set up event listeners
 function setupEventListeners() {
     // File input change
-    document.getElementById('invoice-file').addEventListener('change', handleFileSelect);
+    document.getElementById('invoice-file')?.addEventListener('change', handleFileSelect);
+    
+    // Landing page form submit
+    document.getElementById('landing-upload-form')?.addEventListener('submit', handleLandingFormSubmit);
     
     // Form submissions
-    document.getElementById('upload-form').addEventListener('submit', handleFormSubmit);
-    document.getElementById('edit-item-form').addEventListener('submit', (e) => e.preventDefault());
-    document.getElementById('gstr1-form').addEventListener('submit', handleGSTR1Submit);
+    document.getElementById('upload-form')?.addEventListener('submit', handleFormSubmit);
+    document.getElementById('edit-item-form')?.addEventListener('submit', (e) => e.preventDefault());
+    document.getElementById('gstr1-form')?.addEventListener('submit', handleGSTR1Submit);
     
     // Button clicks
-    document.getElementById('save-item-btn').addEventListener('click', saveItemChanges);
-    document.getElementById('pdf-report-btn').addEventListener('click', () => generateReport('pdf'));
-    document.getElementById('json-report-btn').addEventListener('click', () => generateReport('json'));
-    document.getElementById('history-pdf-btn').addEventListener('click', () => generateHistoryReport('pdf'));
-    document.getElementById('history-json-btn').addEventListener('click', () => generateHistoryReport('json'));
-    document.getElementById('back-to-list-btn').addEventListener('click', () => {
+    document.getElementById('save-item-btn')?.addEventListener('click', saveItemChanges);
+    document.getElementById('pdf-report-btn')?.addEventListener('click', () => generateReport('pdf'));
+    document.getElementById('json-report-btn')?.addEventListener('click', () => generateReport('json'));
+    document.getElementById('history-pdf-btn')?.addEventListener('click', () => generateHistoryReport('pdf'));
+    document.getElementById('history-json-btn')?.addEventListener('click', () => generateHistoryReport('json'));
+    document.getElementById('back-to-list-btn')?.addEventListener('click', () => {
         document.getElementById('invoices-list').classList.remove('d-none');
         document.getElementById('invoice-details').classList.add('d-none');
     });
 }
 
-// Handle file selection
+// Handle file selection for main upload page
 function handleFileSelect(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -98,6 +172,84 @@ function handleFileSelect(e) {
         reader.readAsDataURL(file);
     } else if (file.type === 'application/pdf') {
         document.getElementById('pdf-preview').classList.remove('d-none');
+    }
+}
+
+// Handle file selection for landing page
+function handleLandingFileSelect(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Clear previous previews
+    document.getElementById('landing-image-preview').classList.add('d-none');
+    document.getElementById('landing-pdf-preview').classList.add('d-none');
+    
+    // Show appropriate preview
+    if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById('landing-image-preview');
+            preview.src = e.target.result;
+            preview.classList.remove('d-none');
+        }
+        reader.readAsDataURL(file);
+    } else if (file.type === 'application/pdf') {
+        document.getElementById('landing-pdf-preview').classList.remove('d-none');
+    }
+}
+
+// Handle landing page form submission
+async function handleLandingFormSubmit(e) {
+    e.preventDefault();
+    
+    const fileInput = document.getElementById('landing-invoice-file');
+    if (!fileInput.files[0]) {
+        showAlert('Please select a file to upload', 'danger');
+        return;
+    }
+    
+    // Hide landing page
+    document.getElementById('home-page').classList.add('d-none');
+    document.getElementById('magic-section').classList.add('d-none');
+    
+    // Show upload page with active nav
+    document.getElementById('upload-page').classList.remove('d-none');
+    document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+    document.getElementById('upload-nav').classList.add('active');
+    
+    // Create form data
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+    
+    // Show loading state
+    showAlert('Processing invoice, please wait...', 'info');
+    
+    try {
+        const response = await fetch('/api/process-invoice', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to process invoice');
+        }
+        
+        // Hide loading notification
+        clearAlerts();
+        
+        // Show success
+        showAlert('Invoice processed successfully!', 'success');
+        
+        // Update global variable
+        currentInvoiceId = data.invoice_id;
+        
+        // Display results
+        displayInvoiceResults(data);
+        
+    } catch (error) {
+        showAlert(`Error: ${error.message}`, 'danger');
     }
 }
 
@@ -359,12 +511,15 @@ async function loadInvoices() {
         }
         
         // Clear table
-        document.querySelector('#invoices-table tbody').innerHTML = '';
+        const invoicesTable = document.querySelector('#invoices-table tbody');
+        if (!invoicesTable) return;
+        
+        invoicesTable.innerHTML = '';
         
         if (data.length === 0) {
             const row = document.createElement('tr');
             row.innerHTML = '<td colspan="4" class="text-center">No invoices found. Upload your first invoice to get started!</td>';
-            document.querySelector('#invoices-table tbody').appendChild(row);
+            invoicesTable.appendChild(row);
             return;
         }
         
@@ -384,7 +539,7 @@ async function loadInvoices() {
                 </td>
             `;
             
-            document.querySelector('#invoices-table tbody').appendChild(row);
+            invoicesTable.appendChild(row);
             
             // Add view button event listener
             row.querySelector('.view-invoice-btn').addEventListener('click', (e) => {
@@ -394,7 +549,7 @@ async function loadInvoices() {
         });
         
     } catch (error) {
-        showAlert(`Error loading invoices: ${error.message}`, 'danger');
+        console.error('Error loading invoices:', error);
     }
 }
 
@@ -496,7 +651,7 @@ async function loadInvoiceDetails(invoiceId, isUploadPage = false) {
         document.getElementById('history-total-tax').textContent = `₹${totalTax.toFixed(2)}`;
         
     } catch (error) {
-        showAlert(`Error loading invoice details: ${error.message}`, 'danger');
+        console.error('Error loading invoice details:', error);
     }
 }
 
@@ -527,23 +682,37 @@ function calculateGSTBreakdown(items) {
 async function loadDashboardData() {
     try {
         const response = await fetch('/api/gst-statistics');
-        const data = await response.json();
         
         if (!response.ok) {
             // Just silently fail for dashboard, as it's not critical
+            console.error('Error loading dashboard data');
             return;
         }
         
+        const data = await response.json();
+        
         // Update statistics
-        document.getElementById('dashboard-total-tax').textContent = `₹${data.total_tax.toFixed(2)}`;
-        document.getElementById('dashboard-total-taxable').textContent = `₹${data.total_taxable.toFixed(2)}`;
+        const totalTaxElement = document.getElementById('dashboard-total-tax');
+        const totalTaxableElement = document.getElementById('dashboard-total-taxable');
+        
+        if (totalTaxElement) {
+            totalTaxElement.textContent = `₹${data.total_tax.toFixed(2)}`;
+        }
+        
+        if (totalTaxableElement) {
+            totalTaxableElement.textContent = `₹${data.total_taxable.toFixed(2)}`;
+        }
         
         // Get all invoices to count
         const invoicesResponse = await fetch('/api/invoices');
-        const invoicesData = await invoicesResponse.json();
         
         if (invoicesResponse.ok) {
-            document.getElementById('dashboard-total-invoices').textContent = invoicesData.length;
+            const invoicesData = await invoicesResponse.json();
+            const totalInvoicesElement = document.getElementById('dashboard-total-invoices');
+            
+            if (totalInvoicesElement) {
+                totalInvoicesElement.textContent = invoicesData.length;
+            }
         }
         
         // Create charts
@@ -571,64 +740,70 @@ function createGSTCharts(taxBySlabData) {
     ];
     
     // Create or update GST by slab chart
-    const gstSlabCtx = document.getElementById('gst-by-slab-chart').getContext('2d');
+    const gstSlabCtx = document.getElementById('gst-by-slab-chart')?.getContext('2d');
     
-    if (gstSlabChart) {
-        gstSlabChart.destroy();
-    }
-    
-    gstSlabChart = new Chart(gstSlabCtx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Tax Amount (₹)',
-                data: taxAmounts,
-                backgroundColor: backgroundColors,
-                borderColor: backgroundColors.map(color => color.replace('0.7', '1')),
-                borderWidth: 1
-            }]
-        },
-        options: {
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            },
-            responsive: true,
-            maintainAspectRatio: true
+    if (gstSlabCtx) {
+        if (gstSlabChart) {
+            gstSlabChart.destroy();
         }
-    });
+        
+        gstSlabChart = new Chart(gstSlabCtx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Tax Amount (₹)',
+                    data: taxAmounts,
+                    backgroundColor: backgroundColors,
+                    borderColor: backgroundColors.map(color => color.replace('0.7', '1')),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                responsive: true,
+                maintainAspectRatio: true
+            }
+        });
+    }
     
     // Create or update tax distribution chart
-    const taxDistCtx = document.getElementById('tax-distribution-chart').getContext('2d');
+    const taxDistCtx = document.getElementById('tax-distribution-chart')?.getContext('2d');
     
-    if (taxDistributionChart) {
-        taxDistributionChart.destroy();
-    }
-    
-    taxDistributionChart = new Chart(taxDistCtx, {
-        type: 'pie',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Tax Distribution',
-                data: taxAmounts,
-                backgroundColor: backgroundColors,
-                borderColor: backgroundColors.map(color => color.replace('0.7', '1')),
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true
+    if (taxDistCtx) {
+        if (taxDistributionChart) {
+            taxDistributionChart.destroy();
         }
-    });
+        
+        taxDistributionChart = new Chart(taxDistCtx, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Tax Distribution',
+                    data: taxAmounts,
+                    backgroundColor: backgroundColors,
+                    borderColor: backgroundColors.map(color => color.replace('0.7', '1')),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true
+            }
+        });
+    }
 }
 
 // Show alert
 function showAlert(message, type) {
     const alertArea = document.getElementById('alert-area');
+    if (!alertArea) return;
+    
     const alertHtml = `
         <div class="alert alert-${type} alert-dismissible fade show" role="alert">
             ${message}
@@ -641,5 +816,8 @@ function showAlert(message, type) {
 
 // Clear all alerts
 function clearAlerts() {
-    document.getElementById('alert-area').innerHTML = '';
+    const alertArea = document.getElementById('alert-area');
+    if (alertArea) {
+        alertArea.innerHTML = '';
+    }
 }
